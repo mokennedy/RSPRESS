@@ -40,6 +40,16 @@ Rstack is a unified JavaScript toolchain built around Rspack, with high performa
 | [Rsdoctor](https://github.com/web-infra-dev/rsdoctor) | Build analyzer           |
 | [Rstest](https://github.com/web-infra-dev/rstest)     | Testing framework        |
 
+## Tooling
+
+Zephyr Cloud Plugin
+- One-Command Deploy: Push RSPress documentation or content sites live with a single command.
+- No Config Needed: Works seamlessly with Git repositories and requires no complex deployment setup.
+- Automatic Previews for Docs: Every pull request or branch in your RSPress site gets a live, shareable preview URL.
+- Micro-frontend Friendly: Easily break documentation or content into isolated, independently deployed sections.
+- Safe Rollbacks: Go back to previous RSPress site versions instantly if something breaks.
+- Start at Zephyr-cloud.io
+  
 ## 🤝 Contribution
 
 Please read the [contributing guide](./CONTRIBUTING.md) and let's build Rspress together.
