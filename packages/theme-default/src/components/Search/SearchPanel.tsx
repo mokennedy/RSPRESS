@@ -1,4 +1,9 @@
-import { createPortal, usePageData } from '@rspress/runtime';
+import {
+  createPortal,
+  useLocaleSiteData,
+  usePageData,
+  withBase,
+} from '@rspress/runtime';
 import { type AnyFunction, isProduction } from '@rspress/shared';
 import CloseSvg from '@theme-assets/close';
 import LoadingSvg from '@theme-assets/loading';
@@ -6,11 +11,8 @@ import SearchSvg from '@theme-assets/search';
 import { debounce } from 'lodash-es';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as userSearchHooks from 'virtual-search-hooks';
-import { useLocaleSiteData } from '../../logic/useLocaleSiteData';
 import { SvgWrapper } from '../SvgWrapper';
 import { Tab, Tabs } from '../Tabs';
-import { NoSearchResult } from './NoSearchResult';
-import { SuggestItem } from './SuggestItem';
 import * as styles from './index.module.scss';
 import { PageSearcher } from './logic/search';
 import type {
@@ -22,6 +24,8 @@ import type {
 } from './logic/types';
 import { RenderType } from './logic/types';
 import { removeDomain } from './logic/util';
+import { NoSearchResult } from './NoSearchResult';
+import { SuggestItem } from './SuggestItem';
 
 const KEY_CODE = {
   ARROW_UP: 'ArrowUp',
@@ -239,12 +243,13 @@ export function SearchPanel({ focused, setFocused }: SearchPanelProps) {
             ).flat();
             const suggestion = flatSuggestions[currentSuggestionIndex];
             const isCurrent = resultTabIndex === 0;
+            const link = withBase(
+              isProduction() ? suggestion.link : removeDomain(suggestion.link),
+            );
             if (isCurrent) {
-              window.location.href = isProduction()
-                ? suggestion.link
-                : removeDomain(suggestion.link);
+              window.location.href = link;
             } else {
-              window.open(suggestion.link);
+              window.open(link);
             }
             clearSearchState();
           }

@@ -103,6 +103,7 @@ export interface Config {
   enableContentAnimation?: boolean;
   /**
    * Whether to enable view transition animation for the theme
+   * @default false
    */
   enableAppearanceAnimation?: boolean;
   /**
@@ -298,6 +299,7 @@ export type SocialLinkIcon =
   | 'gitlab'
   | 'X'
   | 'bluesky'
+  | 'npm'
   | { svg: string };
 
 // footer --------------------------------------------------------------------
@@ -319,13 +321,15 @@ export interface LocaleLink {
 }
 
 // normalized config ---------------------------------------------------------
+export type SidebarData = (
+  | SidebarDivider
+  | SidebarItem
+  | SidebarSectionHeader
+  | NormalizedSidebarGroup
+)[];
+
 export interface NormalizedSidebarGroup extends Omit<SidebarGroup, 'items'> {
-  items: (
-    | SidebarDivider
-    | SidebarItem
-    | SidebarSectionHeader
-    | NormalizedSidebarGroup
-  )[];
+  items: SidebarData;
   collapsible: boolean;
   collapsed: boolean;
 }

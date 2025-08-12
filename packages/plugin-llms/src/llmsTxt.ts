@@ -1,7 +1,7 @@
 import {
   type NavItemWithLink,
-  type PageIndexInfo,
   normalizeHref,
+  type PageIndexInfo,
   withBase,
 } from '@rspress/core';
 import type { LlmsTxt } from './types';
@@ -113,4 +113,4 @@ url: ${routePathToMdPath(page.routePath, base)}
   return lines.join('\n');
 }
 
-export { generateLlmsTxt, generateLlmsFullTxt };
+export { routePathToMdPath, generateLlmsTxt, generateLlmsFullTxt };

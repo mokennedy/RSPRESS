@@ -1,12 +1,11 @@
 import path from 'node:path';
 import type { RsbuildPlugin } from '@rsbuild/core';
-import { getSidebarDataGroup } from '@rspress/core';
-import { logger } from '@rspress/core';
 import type {
   Nav,
   NavItemWithLink,
   PageIndexInfo,
   RouteMeta,
+  RouteService,
   RspressPlugin,
   Sidebar,
   SidebarDivider,
@@ -14,10 +13,13 @@ import type {
   SidebarItem,
   SidebarSectionHeader,
 } from '@rspress/core';
-import type { RouteService } from '@rspress/core';
-import { matchPath } from '@rspress/core';
-import { generateLlmsFullTxt, generateLlmsTxt } from './llmsTxt';
-import { mdxToMd } from './mdxToMd';
+import { getSidebarDataGroup, logger, matchPath } from '@rspress/core';
+import {
+  generateLlmsFullTxt,
+  generateLlmsTxt,
+  routePathToMdPath,
+} from './llmsTxt';
+import { normalizeMdFile } from './normalizeMdFile';
 import type {
   Options,
   RspressPluginLlmsOptions,
@@ -45,7 +47,7 @@ const rsbuildPluginLlms = ({
         name: 'llms.txt',
       },
       mdFiles = {
-        mdxToMd: true,
+        mdxToMd: false,
       },
       llmsFullTxt = {
         name: 'llms-full.txt',
@@ -140,32 +142,23 @@ const rsbuildPluginLlms = ({
           const filepath = pageData._filepath;
           const isMD = path.extname(filepath).slice(1) !== 'mdx';
           let mdContent: string | Buffer;
-          if (isMD || (mdFiles && mdFiles.mdxToMd === false)) {
+          try {
+            mdContent = (
+              await normalizeMdFile(
+                content,
+                filepath,
+                routeServiceRef.current!,
+                baseRef.current,
+                typeof mdFiles !== 'boolean' ? mdFiles?.mdxToMd : false,
+                isMD,
+              )
+            ).toString();
+          } catch (e) {
+            // normalizeMdFile might have some edge cases, fallback to no flatten and plain mdx
+            logger.debug('normalizeMdFile failed', pageData.routePath, e);
             mdContent = content;
-          } else {
-            try {
-              mdContent = (
-                await mdxToMd(
-                  content,
-                  filepath,
-                  routeServiceRef.current!,
-                  baseRef.current,
-                )
-              ).toString();
-            } catch (e) {
-              // flatten might have some edge cases, fallback to no flatten and plain mdx
-              logger.debug(e);
-              mdContent = content;
-              return;
-            }
           }
-          // @ts-ignore
-          pageData.mdContent = mdContent;
-          const outFilePath = `${
-            pageData.routePath.endsWith('/')
-              ? `${pageData.routePath}index`
-              : pageData.routePath
-          }.md`;
+          const outFilePath = routePathToMdPath(pageData.routePath, '');
           mdContents[outFilePath] = mdContent.toString();
         }) ?? [],
       );
@@ -291,12 +284,45 @@ function organizeBySidebar(sidebar: Sidebar, pages: PageIndexInfo[]) {
   });
 }
 
+function getDefaultOptions(
+  lang: string | undefined,
+  langs: string[],
+): RspressPluginLlmsOptions {
+  if (!lang || langs.length === 0) {
+    return {};
+  }
+  return langs.map(l => {
+    if (l === lang) {
+      return {
+        llmsTxt: {
+          name: 'llms.txt',
+        },
+        llmsFullTxt: {
+          name: 'llms-full.txt',
+        },
+        include({ page }) {
+          return page.lang === l;
+        },
+      };
+    }
+    return {
+      llmsTxt: {
+        name: `${l}/llms.txt`,
+      },
+      llmsFullTxt: {
+        name: `${l}/llms-full.txt`,
+      },
+      include({ page }) {
+        return page.lang === l;
+      },
+    };
+  });
+}
+
 /**
  * A plugin for rspress to generate llms.txt, llms-full.txt, md files to let llm understand your website.
  */
-export function pluginLlms(
-  options: RspressPluginLlmsOptions = {},
-): RspressPlugin {
+export function pluginLlms(options?: RspressPluginLlmsOptions): RspressPlugin {
   const baseRef: { current: string } = { current: '' };
   const docDirectoryRef: { current: string } = { current: '' };
   const titleRef: { current: string | undefined } = { current: '' };
@@ -331,6 +357,62 @@ export function pluginLlms(
         routes.push(..._routes);
       }
     },
+    config(config) {
+      config.themeConfig = config.themeConfig || {};
+      config.themeConfig.locales =
+        config.themeConfig.locales || config.locales || [];
+
+      const langs = config.themeConfig.locales.map(locale => locale.lang);
+      let mergedOptions: RspressPluginLlmsOptions;
+      if (options === undefined) {
+        mergedOptions = getDefaultOptions(config.lang, langs);
+      } else {
+        mergedOptions = options;
+      }
+
+      if (!config.builderConfig) {
+        config.builderConfig = {};
+      }
+      if (!config.builderConfig.plugins) {
+        config.builderConfig.plugins = [];
+      }
+
+      config.builderConfig.plugins.push(
+        ...(Array.isArray(mergedOptions)
+          ? mergedOptions.map((item, index) => {
+              return rsbuildPluginLlms({
+                pageDataList,
+                routes,
+                titleRef,
+                descriptionRef,
+                langRef,
+                sidebar,
+                routeServiceRef,
+                nav,
+                baseRef,
+                disableSSGRef,
+                rspressPluginOptions: item,
+                index,
+              });
+            })
+          : [
+              rsbuildPluginLlms({
+                pageDataList,
+                routes,
+                titleRef,
+                descriptionRef,
+                langRef,
+                sidebar,
+                routeServiceRef,
+                nav,
+                baseRef,
+                disableSSGRef,
+                rspressPluginOptions: mergedOptions,
+              }),
+            ]),
+      );
+      return config;
+    },
     beforeBuild(config) {
       disableSSGRef.current = config.ssg === false;
 
@@ -363,42 +445,6 @@ export function pluginLlms(
       langRef.current = config.lang ?? '';
       baseRef.current = config.base ?? '/';
       docDirectoryRef.current = config.root ?? 'docs';
-    },
-    builderConfig: {
-      plugins: [
-        ...[
-          Array.isArray(options)
-            ? options.map((item, index) => {
-                return rsbuildPluginLlms({
-                  pageDataList,
-                  routes,
-                  titleRef,
-                  descriptionRef,
-                  langRef,
-                  sidebar,
-                  routeServiceRef,
-                  nav,
-                  baseRef,
-                  disableSSGRef,
-                  rspressPluginOptions: item,
-                  index,
-                });
-              })
-            : rsbuildPluginLlms({
-                pageDataList,
-                routes,
-                titleRef,
-                descriptionRef,
-                langRef,
-                sidebar,
-                routeServiceRef,
-                nav,
-                baseRef,
-                disableSSGRef,
-                rspressPluginOptions: options,
-              }),
-        ],
-      ],
     },
   };
 }

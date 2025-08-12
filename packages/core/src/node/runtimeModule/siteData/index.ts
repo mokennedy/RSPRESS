@@ -1,11 +1,9 @@
-/// <reference types="@rspress-dev/plugin-preview" />
-
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { SEARCH_INDEX_NAME, type SiteData } from '@rspress/shared';
 import { getIconUrlPath } from '@rspress/shared/node-utils';
 import { groupBy } from 'lodash-es';
-import { TEMP_DIR, isProduction } from '../../constants';
+import { isProduction, TEMP_DIR } from '../../constants';
 import { extractPageData } from '../../route/extractPageData';
 import { createHash } from '../../utils';
 import { type FactoryContext, RuntimeModuleID } from '../types';
@@ -116,7 +114,6 @@ export async function siteDataVMPlugin(context: FactoryContext) {
     locales: userConfig?.locales || userConfig.themeConfig?.locales || [],
     logo: userConfig?.logo || '',
     logoText: userConfig?.logoText || '',
-    ssg: Boolean(userConfig?.ssg ?? true),
     multiVersion: {
       default: userConfig?.multiVersion?.default || '',
       versions: userConfig?.multiVersion?.versions || [],
@@ -124,7 +121,13 @@ export async function siteDataVMPlugin(context: FactoryContext) {
     search: tempSearchObj ?? { mode: 'local' },
     pages: pages.map(page => {
       // omit some fields for runtime size
-      const { content, _filepath, _html, _flattenContent, ...rest } = page;
+      const {
+        content: _content,
+        _filepath,
+        _html,
+        _flattenContent,
+        ...rest
+      } = page;
       // FIXME: should not have differences from development
       // In production, we cannot expose the complete filepath for security reasons
       return isProduction() ? rest : { ...rest, _filepath };

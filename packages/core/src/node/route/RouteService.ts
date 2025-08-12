@@ -4,14 +4,18 @@ import type { PageModule, RouteMeta, UserConfig } from '@rspress/shared';
 import { DEFAULT_PAGE_EXTENSIONS } from '@rspress/shared/constants';
 import type { ComponentType } from 'react';
 import { glob } from 'tinyglobby';
-import type { PluginDriver } from '../PluginDriver';
 import { PUBLIC_DIR } from '../constants';
+import type { PluginDriver } from '../PluginDriver';
 import {
-  RoutePage,
+  getRoutePathParts,
+  normalizeRoutePath,
+  splitRoutePathParts,
+} from './normalizeRoutePath';
+import {
   absolutePathToRelativePath,
   absolutePathToRoutePath,
+  RoutePage,
 } from './RoutePage';
-import { getRoutePathParts, normalizeRoutePath } from './normalizeRoutePath';
 
 interface InitOptions {
   scanDir: string;
@@ -41,19 +45,21 @@ export class RouteService {
 
   #defaultLang: string;
 
-  #defaultVersion: string = '';
+  #defaultVersion: string;
 
-  #extensions: string[] = [];
+  #extensions: string[];
 
-  #langs: string[] = [];
+  #langs: string[];
 
-  #versions: string[] = [];
+  #versions: string[];
 
-  #include: string[] = [];
+  #include: string[];
 
-  #exclude: string[] = [];
+  #exclude: string[];
 
-  #tempDir: string = '';
+  #excludeConvention: string[];
+
+  #tempDir: string;
 
   #pluginDriver: PluginDriver;
 
@@ -88,7 +94,8 @@ export class RouteService {
     this.#scanDir = scanDir;
     this.#extensions = routeOptions.extensions || DEFAULT_PAGE_EXTENSIONS;
     this.#include = routeOptions.include || [];
-    this.#exclude = routeOptions.exclude || [];
+    this.#exclude = routeOptions.exclude || []; // partial mdx components and code samples, e.g: _d.mdx
+    this.#excludeConvention = routeOptions.excludeConvention || ['**/_[^_]*']; // partial mdx components and code samples, e.g: _d.mdx
     this.#defaultLang = userConfig?.lang || '';
     this.#langs = (
       userConfig?.locales ??
@@ -101,6 +108,9 @@ export class RouteService {
     if (userConfig.multiVersion) {
       this.#defaultVersion = userConfig.multiVersion.default || '';
       this.#versions = userConfig.multiVersion.versions || [];
+    } else {
+      this.#defaultVersion = '';
+      this.#versions = [];
     }
   }
 
@@ -121,10 +131,12 @@ export class RouteService {
         onlyFiles: true,
         ignore: [
           ...this.#exclude,
+          ...this.#excludeConvention,
           '**/node_modules/**',
           '**/.eslintrc.js',
           '**/.nx/**',
           `./${PUBLIC_DIR}/**`,
+          '**/*.d.ts',
         ],
       })
     ).sort();
@@ -234,6 +246,16 @@ ${routeMeta
     );
   }
 
+  splitRoutePathParts(relativePath: string) {
+    return splitRoutePathParts(
+      relativePath,
+      this.#defaultLang,
+      this.#defaultVersion,
+      this.#langs,
+      this.#versions,
+    );
+  }
+
   normalizeRoutePath(relativePath: string) {
     return normalizeRoutePath(
       relativePath,
@@ -247,6 +269,11 @@ ${routeMeta
 
   absolutePathToRoutePath(absolutePath: string): string {
     return absolutePathToRoutePath(absolutePath, this.#scanDir, this);
+  }
+
+  isInDocsDir(absolutePath: string): boolean {
+    const relativePath = path.relative(this.#scanDir, absolutePath);
+    return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
   }
 
   absolutePathToRelativePath(absolutePath: string): string {

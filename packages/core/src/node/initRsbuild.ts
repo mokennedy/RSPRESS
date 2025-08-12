@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type {
@@ -10,15 +11,16 @@ import { PLUGIN_REACT_NAME, pluginReact } from '@rsbuild/plugin-react';
 import {
   MDX_OR_MD_REGEXP,
   RSPRESS_TEMP_DIR,
-  type UserConfig,
   removeTrailingSlash,
+  type UserConfig,
 } from '@rspress/shared';
 import { pluginVirtualModule } from 'rsbuild-plugin-virtual-module';
-import type { PluginDriver } from './PluginDriver';
 import { modifyConfigWithAutoNavSide } from './auto-nav-sidebar';
 import {
   CSR_CLIENT_ENTRY,
   DEFAULT_TITLE,
+  inlineThemeScript,
+  isProduction,
   NODE_SSG_BUNDLE_FOLDER,
   NODE_SSG_BUNDLE_NAME,
   OUTPUT_DIR,
@@ -27,13 +29,12 @@ import {
   SSR_CLIENT_ENTRY,
   SSR_SERVER_ENTRY,
   TEMPLATE_PATH,
-  inlineThemeScript,
-  isProduction,
 } from './constants';
 import {
   hintBuilderPluginsBreakingChange,
   hintThemeBreakingChange,
 } from './logger/hint';
+import type { PluginDriver } from './PluginDriver';
 import { RouteService } from './route/RouteService';
 import {
   getVirtualModulesFromPlugins,
@@ -64,6 +65,10 @@ function isPluginIncluded(config: UserConfig, pluginName: string): boolean {
     ),
   );
 }
+
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function createInternalBuildConfig(
   userDocRoot: string,
@@ -219,6 +224,13 @@ async function createInternalBuildConfig(
         '@theme': [CUSTOM_THEME_DIR, DEFAULT_THEME],
         '@theme-assets': path.join(DEFAULT_THEME, '../assets'),
         'react-lazy-with-preload': require.resolve('react-lazy-with-preload'),
+        // single runtime
+        '@rspress/core/theme': path.join(__dirname, 'theme.js'),
+        '@rspress/core/runtime': path.join(__dirname, 'runtime.js'),
+        '@rspress/core/shiki-transformers': path.join(
+          __dirname,
+          'shiki-transformers.js',
+        ),
       },
     },
     source: {
@@ -234,12 +246,16 @@ async function createInternalBuildConfig(
       ...(process.env.RSPRESS_PERSISTENT_CACHE !== 'false'
         ? {
             buildCache: {
-              buildDependencies: [pluginDriver.getConfigFilePath()],
+              // 1. config file: rspress.config.ts
+              buildDependencies: [
+                __filename, // this file,  __filename
+                pluginDriver.getConfigFilePath(), // rspress.config.ts
+              ],
               cacheDigest: [
-                // other configuration files which are not included in rspress.config.ts should be added to cacheDigest
-                // 1. routeService glob
+                // 2.other configuration files which are not included in rspress.config.ts should be added to cacheDigest
+                // 2.1 routeService glob
                 routeService.generateRoutesCode(),
-                // 2. auto-nav-sidebar _nav.json or _meta.json
+                // 2.2. auto-nav-sidebar _nav.json or _meta.json
                 JSON.stringify(
                   config.themeConfig?.locales?.map(i => ({
                     nav: i.nav,
@@ -278,9 +294,6 @@ async function createInternalBuildConfig(
           .use(CHAIN_ID.USE.SWC)
           .get('options');
 
-        const checkDeadLinks =
-          (config?.markdown?.checkDeadLinks && !isServer) ?? false;
-
         chain.module
           .rule('MDX')
           .type('javascript/auto')
@@ -300,7 +313,6 @@ async function createInternalBuildConfig(
           .options({
             config,
             docDirectory: userDocRoot,
-            checkDeadLinks,
             routeService,
             pluginDriver,
           })

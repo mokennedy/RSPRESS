@@ -2,6 +2,7 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { defineConfig } from '@rspress/core';
 import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginLlms } from '@rspress/plugin-llms';
+import { pluginSitemap } from '@rspress/plugin-sitemap';
 import {
   transformerNotationDiff,
   transformerNotationErrorLevel,
@@ -11,9 +12,8 @@ import {
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import { pluginFontOpenSans } from 'rspress-plugin-font-open-sans';
-import pluginSitemap from 'rspress-plugin-sitemap';
 
-const siteUrl = 'https://rspress.rs';
+const siteUrl = 'https://v2.rspress.rs';
 
 export default defineConfig({
   root: 'docs',
@@ -24,7 +24,6 @@ export default defineConfig({
   logoText: 'Rspress',
   icon: 'https://assets.rspack.rs/rspress/rspress-logo-480x480.png',
   markdown: {
-    checkDeadLinks: true,
     shiki: {
       transformers: [
         transformerNotationDiff(),
@@ -37,31 +36,12 @@ export default defineConfig({
   plugins: [
     pluginFontOpenSans(),
     pluginSitemap({
-      domain: siteUrl,
+      siteUrl,
     }),
     pluginAlgolia({
       verificationContent: '8F5BFE50E65777F1',
     }),
-    pluginLlms([
-      {
-        llmsTxt: {
-          name: 'llms.txt',
-        },
-        llmsFullTxt: {
-          name: 'llms-full.txt',
-        },
-        include: ({ page }) => page.lang === 'en',
-      },
-      {
-        llmsTxt: {
-          name: 'zh/llms.txt',
-        },
-        llmsFullTxt: {
-          name: 'zh/llms-full.txt',
-        },
-        include: ({ page }) => page.lang === 'zh',
-      },
-    ]),
+    pluginLlms(),
   ],
   builderConfig: {
     plugins: [
@@ -79,16 +59,13 @@ export default defineConfig({
         },
       }),
     ],
-    output: {
-      cleanDistPath: false,
-    },
   },
   route: {
     cleanUrls: true,
     exclude: ['**/fragments/**'],
   },
   themeConfig: {
-    enableAppearanceAnimation: false,
+    lastUpdated: true,
     footer: {
       message: '© 2023-present ByteDance Inc.',
     },
@@ -137,7 +114,7 @@ export default defineConfig({
     ],
   },
   languageParity: {
-    enabled: true,
+    enabled: false,
     include: [],
     exclude: [],
   },

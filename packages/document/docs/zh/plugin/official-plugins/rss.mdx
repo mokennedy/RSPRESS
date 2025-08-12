@@ -1,8 +1,6 @@
-# @rspress/plugin-rss
+# @rspress/plugin-rss <SourceCode href="https://github.com/web-infra-dev/rspress/tree/main/packages/plugin-rss" />
 
 import { SourceCode, PackageManagerTabs } from '@rspress/core/theme';
-
-<SourceCode href="https://github.com/web-infra-dev/rspress/tree/main/packages/plugin-rss" />
 
 使用 [feed](https://github.com/jpmonette/feed) 为文档中的某些页面生成 RSS 文件。
 
@@ -155,6 +153,24 @@ export interface PluginRssOptions {
 - **必填**
 
 当前文档站点的站点 URL。将在 RSS 文件中使用。
+
+当存在 `base` 配置时，`siteUrl` 需要包含 `base` 的路径。例如：
+
+```ts
+// rspress.config.ts
+import path from 'path';
+import { defineConfig } from '@rspress/core';
+import { pluginRss } from '@rspress/plugin-rss';
+
+export default defineConfig({
+  base: '/base/',
+  plugins: [
+    pluginRss({
+      siteUrl: 'https://example.com/base/',
+    }),
+  ],
+});
+```
 
 #### `feed`
 

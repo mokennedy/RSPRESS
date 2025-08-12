@@ -1,13 +1,16 @@
-import { pathnameToRouteService, useLocation } from '@rspress/runtime';
+import {
+  isActive,
+  pathnameToRouteService,
+  useLocation,
+} from '@rspress/runtime';
 import {
   type SidebarDivider as ISidebarDivider,
   type SidebarItem as ISidebarItem,
   type SidebarSectionHeader as ISidebarSectionHeader,
-  type NormalizedSidebarGroup,
   isExternalUrl,
+  type NormalizedSidebarGroup,
 } from '@rspress/shared';
 import { useCallback } from 'react';
-import { isActive } from '../../logic/getSidebarDataGroup';
 
 export const isSidebarDivider = (
   item:

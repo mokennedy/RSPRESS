@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises';
 import type { UserConfig } from '@rspress/shared';
-import { PluginDriver } from './PluginDriver';
 import { TEMP_DIR } from './constants';
 import { initRsbuild } from './initRsbuild';
 import { hintSSGFalse } from './logger/hint';
+import { PluginDriver } from './PluginDriver';
 import { writeSearchIndex } from './searchIndex';
 import { checkLanguageParity } from './utils/checkLanguageParity';
 
@@ -48,7 +48,7 @@ export async function build(options: BuildOptions) {
   await pluginDriver.init();
   const modifiedConfig = await pluginDriver.modifyConfig();
 
-  const ssgConfig = modifiedConfig.ssg ?? true;
+  const ssgConfig = Boolean(modifiedConfig.ssg ?? true);
 
   // empty temp dir before build
   await emptyDir(TEMP_DIR);

@@ -1,17 +1,20 @@
-import { Content, usePageData } from '@rspress/runtime';
+import {
+  Content,
+  useFrontmatter,
+  useLocaleSiteData,
+  usePageData,
+  useSiteData,
+} from '@rspress/runtime';
 import type { FrontMatterMeta } from '@rspress/shared';
 import {
   HomeLayout as DefaultHomeLayout,
   NotFoundLayout as DefaultNotFoundLayout,
   Nav,
 } from '@theme';
-import { useHead } from '@unhead/react';
-import { Head } from '@unhead/react';
-import React, { memo } from 'react';
-import { useMemo } from 'react';
+import { Head, useHead } from '@unhead/react';
+import React, { memo, useMemo } from 'react';
 import type { NavProps } from '../../components/Nav';
 import { useSetup } from '../../logic/sideEffects';
-import { useLocaleSiteData } from '../../logic/useLocaleSiteData';
 import { useRedirect4FirstVisit } from '../../logic/useRedirect4FirstVisit';
 import { type UISwitchResult, useUISwitch } from '../../logic/useUISwitch';
 import { DocLayout, type DocLayoutProps } from '../DocLayout';
@@ -126,13 +129,14 @@ export function Layout(props: LayoutProps) {
     beforeFeatures,
     afterFeatures,
   };
-  const { siteData, page } = usePageData();
+  const { page } = usePageData();
+  const { site } = useSiteData();
+  const { frontmatter } = useFrontmatter();
   const {
     pageType,
     lang: currentLang,
     // Inject by remark-plugin-toc
     title: articleTitle,
-    frontmatter = {},
   } = page;
   const localesData = useLocaleSiteData();
 
@@ -143,7 +147,7 @@ export function Layout(props: LayoutProps) {
   // Always show sidebar by default
   // Priority: front matter title > h1 title
   let title = (frontmatter.title as string) ?? articleTitle;
-  const mainTitle = siteData.title || localesData.title || '';
+  const mainTitle = site.title || localesData.title || '';
 
   if (title && pageType === 'doc') {
     // append main title as a suffix
@@ -161,7 +165,7 @@ export function Layout(props: LayoutProps) {
 
   const description =
     (frontmatter?.description as string) ||
-    siteData.description ||
+    site.description ||
     localesData.description;
 
   // Control whether or not to display the navbar, sidebar, outline and footer

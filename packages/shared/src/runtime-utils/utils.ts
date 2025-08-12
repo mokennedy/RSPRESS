@@ -5,15 +5,6 @@ export const APPEARANCE_KEY = 'rspress-theme-appearance';
 export const SEARCH_INDEX_NAME = 'search_index';
 export const RSPRESS_TEMP_DIR = '.rspress';
 
-export const DEFAULT_HIGHLIGHT_LANGUAGES = [
-  ['js', 'javascript'],
-  ['ts', 'typescript'],
-  ['jsx', 'tsx'],
-  ['xml', 'xml-doc'],
-  ['md', 'markdown'],
-  ['mdx', 'tsx'],
-];
-
 // TODO: these utils should be divided into node and runtime
 export const isProduction = () => process.env.NODE_ENV === 'production';
 
@@ -225,13 +216,17 @@ export function normalizeHref(url?: string, cleanUrls = false) {
   if (url.startsWith('#')) {
     return url;
   }
+  if (!url.startsWith('/')) {
+    return url;
+  }
 
   // eslint-disable-next-line prefer-const
   let { url: cleanUrl, hash } = parseUrl(decodeURIComponent(url));
 
   // 1. cleanUrls: false
   if (!cleanUrls) {
-    if (!cleanUrl.endsWith('.html')) {
+    const hasExt = /\.[a-zA-Z]\w*$/.test(cleanUrl);
+    if (!hasExt) {
       if (cleanUrl.endsWith('/')) {
         cleanUrl += 'index.html';
       } else {

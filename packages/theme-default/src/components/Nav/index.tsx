@@ -1,18 +1,20 @@
-import { useLocation, usePageData, useWindowSize } from '@rspress/runtime';
+import {
+  useLocation,
+  useNav,
+  usePageData,
+  useWindowSize,
+} from '@rspress/runtime';
 import type { NavItem } from '@rspress/shared';
-import { Search } from '@theme';
+import { Search, SocialLinks, SwitchAppearance } from '@theme';
 import { base } from 'virtual-runtime-config';
 import { useHiddenNav } from '../../logic/useHiddenNav';
-import { useNavData } from '../../logic/useNav';
 import { NavHamburger } from '../NavHamburger';
-import { SocialLinks } from '../SocialLinks';
-import { SwitchAppearance } from '../SwitchAppearance';
+import * as styles from './index.module.scss';
 import { NavBarTitle } from './NavBarTitle';
 import { NavMenuGroup } from './NavMenuGroup';
 import { NavMenuSingleItem } from './NavMenuSingleItem';
 import { NavTranslations } from './NavTranslations';
 import { NavVersions } from './NavVersions';
-import * as styles from './index.module.scss';
 
 export interface NavProps {
   beforeNav?: React.ReactNode;
@@ -69,7 +71,7 @@ export function Nav(props: NavProps) {
     );
   };
 
-  const menuItems = useNavData();
+  const menuItems = useNav();
 
   const getPosition = (menuItem: NavItem) =>
     menuItem.position ?? DEFAULT_NAV_POSITION;

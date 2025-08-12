@@ -46,6 +46,7 @@ flexsearch
 fnames
 frontmatter
 fullhash
+fumadocs
 Geass
 htmr
 iconify
@@ -120,6 +121,7 @@ rsfamily
 rslib
 rslog
 rspack
+rslint
 rspress
 rstack
 rstest

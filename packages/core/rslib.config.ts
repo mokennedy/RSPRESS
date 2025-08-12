@@ -26,21 +26,22 @@ export default defineConfig({
     generateEntry('./src/theme.ts'),
     {
       format: 'esm',
+      syntax: 'es2022',
+      source: {
+        entry: {
+          renderPageWorker: './src/node/ssg/renderPageWorker.ts',
+        },
+      },
+    },
+    {
+      format: 'esm',
       dts: {
         bundle: true,
       },
       syntax: 'es2022',
-      shims: {
-        esm: {
-          require: true,
-        },
-      },
       source: {
         entry: {
           cli: './src/cli/index.ts',
-        },
-        define: {
-          REQUIRE_CACHE: 'require.cache',
         },
       },
       output: {
@@ -58,16 +59,6 @@ export default defineConfig({
         bundle: true,
       },
       syntax: 'es2022',
-      shims: {
-        esm: {
-          require: true,
-        },
-      },
-      source: {
-        define: {
-          REQUIRE_CACHE: 'require.cache',
-        },
-      },
       output: {
         distPath: {
           root: './dist',
@@ -79,11 +70,6 @@ export default defineConfig({
       syntax: 'es2022',
       dts: {
         bundle: true,
-      },
-      shims: {
-        esm: {
-          require: true,
-        },
       },
       output: {
         distPath: {
@@ -104,11 +90,6 @@ export default defineConfig({
       syntax: 'es2022',
       dts: {
         bundle: true,
-      },
-      shims: {
-        esm: {
-          require: true,
-        },
       },
       output: {
         distPath: {

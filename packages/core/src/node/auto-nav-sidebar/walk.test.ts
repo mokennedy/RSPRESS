@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { DEFAULT_PAGE_EXTENSIONS } from '@rspress/shared/constants';
 import { describe, expect, it } from 'vitest';
-import { RouteService } from '../route/RouteService';
 import {
   getRoutePathParts,
   normalizeRoutePath,
 } from '../route/normalizeRoutePath';
+import { RouteService } from '../route/RouteService';
 import { walk } from './walk';
 
 const mockNormalizeRoutePath = (link: string) => {
@@ -229,44 +229,6 @@ describe('walk', () => {
                   "text": "Guide",
                 },
               ],
-              "link": "/api/",
-              "overviewHeaders": undefined,
-              "tag": undefined,
-              "text": "No meta",
-            },
-          ],
-          "/api": [
-            {
-              "_fileKey": "api/api",
-              "context": undefined,
-              "link": "/api/api",
-              "overviewHeaders": undefined,
-              "tag": undefined,
-              "text": "Api",
-            },
-            {
-              "_fileKey": "api/guide/index",
-              "collapsed": undefined,
-              "collapsible": undefined,
-              "context": undefined,
-              "items": [
-                {
-                  "_fileKey": "api/guide/getting-started",
-                  "context": undefined,
-                  "link": "/api/guide/getting-started",
-                  "overviewHeaders": undefined,
-                  "tag": undefined,
-                  "text": "Getting started",
-                },
-              ],
-              "link": "/api/guide/",
-              "overviewHeaders": undefined,
-              "tag": undefined,
-              "text": "Guide",
-            },
-            {
-              "_fileKey": "api/index",
-              "context": undefined,
               "link": "/api/",
               "overviewHeaders": undefined,
               "tag": undefined,
